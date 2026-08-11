@@ -99,16 +99,25 @@ def generate_random_tortuous_vessel(
     length=100,
     n_points=500,
     seed=None,
+    difficulty="moderate",
 ):
     """
-    Generate a randomized 2D tortuous vessel centerline.
+    Generate a randomized 2D synthetic vessel centerline.
 
-    The geometry is constructed from several sinusoidal components
-    with randomized amplitudes, frequencies, and phases.
+    Three geometric difficulty levels are supported:
 
-    This function is intended to generate varied simulation
-    geometries for controller robustness testing and machine
-    learning dataset generation.
+    easy:
+        Broad, gradual bends with relatively low curvature.
+
+    moderate:
+        Multiple bends with intermediate curvature and tortuosity.
+
+    severe:
+        More frequent bends, tighter local changes in direction,
+        and higher expected curvature.
+
+    The geometry is intended for computational testing and does not
+    represent patient-specific anatomy.
 
     Parameters
     ----------
@@ -119,7 +128,10 @@ def generate_random_tortuous_vessel(
         Number of sampled centerline points.
 
     seed : int or None
-        Optional random seed for reproducible vessel generation.
+        Random seed for reproducible geometry generation.
+
+    difficulty : str
+        "easy", "moderate", or "severe".
 
     Returns
     -------
@@ -135,27 +147,72 @@ def generate_random_tortuous_vessel(
     x = np.linspace(
         0,
         length,
-        n_points
+        n_points,
     )
+
+    # Normalized position from 0 to 1.
+    t = x / length
 
     y = np.zeros_like(x)
 
-    # Generate between 2 and 4 sinusoidal components
-    n_components = rng.integers(
-        2,
-        5
-    )
+    # ---------------------------------------------------------
+    # Difficulty-dependent geometry settings
+    # ---------------------------------------------------------
+
+    if difficulty == "easy":
+
+        n_components = rng.integers(1, 3)
+
+        amplitude_range = (1.5, 4.0)
+        frequency_range = (0.4, 1.2)
+
+        n_local_bends = rng.integers(0, 2)
+
+        local_amplitude_range = (1.0, 2.5)
+        local_width_range = (0.12, 0.20)
+
+    elif difficulty == "moderate":
+
+        n_components = rng.integers(2, 5)
+
+        amplitude_range = (2.5, 6.0)
+        frequency_range = (0.8, 1.8)
+
+        n_local_bends = rng.integers(1, 3)
+
+        local_amplitude_range = (1.5, 4.0)
+        local_width_range = (0.08, 0.15)
+
+    elif difficulty == "severe":
+
+        n_components = rng.integers(3, 6)
+
+        amplitude_range = (3.5, 8.0)
+        frequency_range = (1.2, 2.4)
+
+        n_local_bends = rng.integers(2, 5)
+
+        local_amplitude_range = (2.5, 6.0)
+        local_width_range = (0.05, 0.10)
+
+    else:
+
+        raise ValueError(
+            "difficulty must be 'easy', 'moderate', or 'severe'"
+        )
+
+    # ---------------------------------------------------------
+    # Broad vessel curvature
+    # ---------------------------------------------------------
 
     for _ in range(n_components):
 
         amplitude = rng.uniform(
-            2.0,
-            8.0
+            *amplitude_range
         )
 
         frequency = rng.uniform(
-            0.8,
-            3.0
+            *frequency_range
         )
 
         phase = rng.uniform(
@@ -166,15 +223,57 @@ def generate_random_tortuous_vessel(
         y += (
             amplitude
             * np.sin(
-                frequency
+                2
                 * np.pi
-                * x
-                / length
+                * frequency
+                * t
                 + phase
             )
         )
 
-    # Force the vessel to begin near y = 0
+    # ---------------------------------------------------------
+    # Localized bends
+    #
+    # These create tighter S-shaped regions instead of making
+    # every vessel look like only a large sine wave.
+    # ---------------------------------------------------------
+
+    for _ in range(n_local_bends):
+
+        center = rng.uniform(
+            0.15,
+            0.85
+        )
+
+        width = rng.uniform(
+            *local_width_range
+        )
+
+        amplitude = rng.uniform(
+            *local_amplitude_range
+        )
+
+        direction = rng.choice(
+            [-1.0, 1.0]
+        )
+
+        z = (
+            (t - center)
+            / width
+        )
+
+        local_bend = (
+            direction
+            * amplitude
+            * z
+            * np.exp(
+                -0.5 * z**2
+            )
+        )
+
+        y += local_bend
+
+    # Shift entire vessel so that it begins at y = 0.
     y = y - y[0]
 
     return x, y
