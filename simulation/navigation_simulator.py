@@ -27,7 +27,10 @@ from simulation.vessel_geometry import (
 
 from simulation.catheter_model import simulate_local_navigation
 
-
+from simulation.failure_model import (
+    calculate_buckling_risk,
+    calculate_kickback,
+)
 def calculate_arc_length(x, y):
     """
     Calculate cumulative distance along the vessel centerline.
@@ -76,7 +79,17 @@ def run_navigation_simulation(
             commanded_velocity=commanded_velocity,
             base_force=base_force,
         )
+        buckling_risk = calculate_buckling_risk(
+            push_force=local_result["push_force"],
+            velocity=local_result["velocity"],
+            stiffness=stiffness,
+        )
 
+        kickback_score = calculate_kickback(
+            push_force=local_result["push_force"],
+            velocity=local_result["velocity"],
+            resistance=local_result["resistance"],
+        )
         results.append({
             "position": position[i],
             "x": x[i],
@@ -87,6 +100,8 @@ def run_navigation_simulation(
             "resistance": local_result["resistance"],
             "velocity": local_result["velocity"],
             "push_force": local_result["push_force"],
+            "buckling_risk": buckling_risk,
+            "kickback_score": kickback_score,
         })
 
     return pd.DataFrame(results)

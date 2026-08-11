@@ -30,6 +30,10 @@ from simulation.vessel_geometry import (
 from simulation.catheter_model import (
     simulate_local_navigation,
 )
+from simulation.failure_model import (
+    calculate_buckling_risk,
+    calculate_kickback,
+)
 
 from simulation.navigation_simulator import (
     calculate_arc_length,
@@ -83,7 +87,17 @@ def run_adaptive_navigation(
             commanded_velocity=commanded_velocity,
             base_force=base_force,
         )
+        buckling_risk = calculate_buckling_risk(
+            push_force=local_result["push_force"],
+            velocity=local_result["velocity"],
+            stiffness=current_stiffness,
+        )
 
+        kickback_score = calculate_kickback(
+            push_force=local_result["push_force"],
+            velocity=local_result["velocity"],
+            resistance=local_result["resistance"],
+        )
         # ---------------------------------------------
         # 2. Send the simulated measurements to
         #    the adaptive controller.
@@ -111,6 +125,8 @@ def run_adaptive_navigation(
             "resistance": local_result["resistance"],
             "velocity": local_result["velocity"],
             "push_force": local_result["push_force"],
+            "buckling_risk": buckling_risk,
+            "kickback_score": kickback_score,
             "controller_action": action,
             "controller_reason": reason,
         })
