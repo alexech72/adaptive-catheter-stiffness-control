@@ -95,6 +95,89 @@ def generate_tortuous_vessel(length=100, amplitude=10, n_points=500):
     )
 
     return x, y
+def generate_random_tortuous_vessel(
+    length=100,
+    n_points=500,
+    seed=None,
+):
+    """
+    Generate a randomized 2D tortuous vessel centerline.
+
+    The geometry is constructed from several sinusoidal components
+    with randomized amplitudes, frequencies, and phases.
+
+    This function is intended to generate varied simulation
+    geometries for controller robustness testing and machine
+    learning dataset generation.
+
+    Parameters
+    ----------
+    length : float
+        Longitudinal vessel length.
+
+    n_points : int
+        Number of sampled centerline points.
+
+    seed : int or None
+        Optional random seed for reproducible vessel generation.
+
+    Returns
+    -------
+    x : numpy.ndarray
+        Longitudinal coordinates.
+
+    y : numpy.ndarray
+        Lateral coordinates.
+    """
+
+    rng = np.random.default_rng(seed)
+
+    x = np.linspace(
+        0,
+        length,
+        n_points
+    )
+
+    y = np.zeros_like(x)
+
+    # Generate between 2 and 4 sinusoidal components
+    n_components = rng.integers(
+        2,
+        5
+    )
+
+    for _ in range(n_components):
+
+        amplitude = rng.uniform(
+            2.0,
+            8.0
+        )
+
+        frequency = rng.uniform(
+            0.8,
+            3.0
+        )
+
+        phase = rng.uniform(
+            0,
+            2 * np.pi
+        )
+
+        y += (
+            amplitude
+            * np.sin(
+                frequency
+                * np.pi
+                * x
+                / length
+                + phase
+            )
+        )
+
+    # Force the vessel to begin near y = 0
+    y = y - y[0]
+
+    return x, y
 
 def generate_circular_arc(radius=20, angle_degrees=120, n_points=500):
     """
@@ -219,6 +302,6 @@ def main():
         circle_y,
         "Circular Verification Vessel"
     )
-    
+
 if __name__ == "__main__":
     main()
