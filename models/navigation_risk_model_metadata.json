@@ -1,0 +1,19 @@
+{
+    "model_type": "RandomForestRegressor",
+    "features": [
+        "curvature",
+        "current_stiffness",
+        "push_force",
+        "velocity"
+    ],
+    "target": "combined_risk",
+    "training_samples": 51000,
+    "training_vessels": 255,
+    "hyperparameters": {
+        "n_estimators": 150,
+        "max_depth": 12,
+        "min_samples_leaf": 5,
+        "random_state": 42
+    },
+    "important_note": "Predicts simulated digital-twin risk. Not clinically validated."
+}
