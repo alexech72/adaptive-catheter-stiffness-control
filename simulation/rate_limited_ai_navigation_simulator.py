@@ -503,7 +503,7 @@ def main():
     )
 
     results.to_csv(
-        "results/"
+        "results/final/"
         "rate_limited_ai_navigation.csv",
         index=False,
     )

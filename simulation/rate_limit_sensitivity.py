@@ -25,7 +25,7 @@ from simulation.rate_limited_ai_navigation_simulator import (
 )
 
 
-RESULTS_DIRECTORY = Path("results")
+RESULTS_DIRECTORY = Path("results/final")
 
 
 RATE_LIMITS = [

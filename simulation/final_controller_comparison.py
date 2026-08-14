@@ -39,7 +39,7 @@ from simulation.ai_adaptive_navigation_simulator import (
 )
 
 
-RESULTS_DIRECTORY = Path("results")
+RESULTS_DIRECTORY = Path("results/final")
 
 
 def add_combined_risk(data):

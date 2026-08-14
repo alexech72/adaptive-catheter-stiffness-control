@@ -50,7 +50,7 @@ from controllers.rate_limited_ai_controller import (
 )
 
 
-RESULTS_DIRECTORY = Path("results")
+RESULTS_DIRECTORY = Path("results/final")
 
 DIFFICULTIES = [
     "easy",
