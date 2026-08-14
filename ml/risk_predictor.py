@@ -47,6 +47,7 @@ class NavigationRiskPredictor:
         self.model = joblib.load(
             model_path
         )
+        self.model.n_jobs = 1
 
     def predict(
         self,
@@ -55,6 +56,8 @@ class NavigationRiskPredictor:
         push_force,
         velocity,
     ):
+    
+    
         """
         Predict simulated navigation risk for one state.
         """
@@ -75,7 +78,21 @@ class NavigationRiskPredictor:
         return float(
             predicted_risk
         )
+    def predict_batch(
+        self,
+        states,
+    ):
+        """
+        Predict risk for multiple candidate states at once.
+        """
 
+        inputs = pd.DataFrame(states)
+
+        predictions = self.model.predict(
+            inputs[FEATURES]
+        )
+
+        return predictions
 
 def main():
 

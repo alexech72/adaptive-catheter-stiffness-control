@@ -28,7 +28,7 @@ class RateLimitedAIController:
 
     def __init__(
         self,
-        maximum_stiffness_change=0.05,
+        maximum_stiffness_change=0.10,
     ):
 
         self.maximum_stiffness_change = (

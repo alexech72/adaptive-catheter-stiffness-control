@@ -80,116 +80,72 @@ class AIAssistedController:
         base_force=0.1,
     ):
         """
-        Evaluate candidate stiffness values and select
-        the one with the lowest predicted risk.
-
-        Returns
-        -------
-        best_stiffness : float
-            Selected stiffness command.
-
-        best_predicted_risk : float
-            Lowest predicted risk found.
-
-        candidate_results : list
-            Results for every stiffness evaluated.
+        Evaluate all candidate stiffness values and
+        choose the one with the lowest predicted risk.
         """
 
         candidate_results = []
+        model_inputs = []
 
-        best_stiffness = None
-        best_predicted_risk = float(
-            "inf"
-        )
+        # Calculate mechanical response for every
+        # candidate stiffness.
+        for candidate_stiffness in self.candidate_stiffnesses:
 
-        for candidate_stiffness in (
-            self.candidate_stiffnesses
-        ):
-
-            # -----------------------------------------
-            # Predict mechanical response for this
-            # candidate stiffness.
-            # -----------------------------------------
-
-            local_result = (
-                simulate_local_navigation(
-                    curvature=curvature,
-                    friction=friction,
-                    stiffness=candidate_stiffness,
-                    commanded_velocity=commanded_velocity,
-                    base_force=base_force,
-                )
-            )
-
-            # -----------------------------------------
-            # AI estimates risk from the resulting
-            # navigation state.
-            # -----------------------------------------
-
-            predicted_risk = (
-                self.risk_predictor.predict(
-                    curvature=curvature,
-                    current_stiffness=(
-                        candidate_stiffness
-                    ),
-                    push_force=(
-                        local_result[
-                            "push_force"
-                        ]
-                    ),
-                    velocity=(
-                        local_result[
-                            "velocity"
-                        ]
-                    ),
-                )
+            local_result = simulate_local_navigation(
+                curvature=curvature,
+                friction=friction,
+                stiffness=candidate_stiffness,
+                commanded_velocity=commanded_velocity,
+                base_force=base_force,
             )
 
             candidate_results.append({
-                "stiffness":
-                    float(
-                        candidate_stiffness
-                    ),
-
-                "predicted_risk":
-                    predicted_risk,
-
+                "stiffness": float(candidate_stiffness),
                 "predicted_resistance":
-                    local_result[
-                        "resistance"
-                    ],
-
+                    local_result["resistance"],
                 "predicted_push_force":
-                    local_result[
-                        "push_force"
-                    ],
-
+                    local_result["push_force"],
                 "predicted_velocity":
-                    local_result[
-                        "velocity"
-                    ],
+                    local_result["velocity"],
             })
 
-            # -----------------------------------------
-            # Keep lowest-risk candidate.
-            # -----------------------------------------
+            model_inputs.append({
+                "curvature":
+                    curvature,
+                "current_stiffness":
+                    candidate_stiffness,
+                "push_force":
+                    local_result["push_force"],
+                "velocity":
+                    local_result["velocity"],
+            })
 
-            if (
+        # Predict risk for ALL stiffness candidates
+        # with one Random Forest call.
+        predicted_risks = (
+            self.risk_predictor.predict_batch(
+                model_inputs
+            )
+        )
+
+        for result, predicted_risk in zip(
+            candidate_results,
+            predicted_risks,
+        ):
+            result["predicted_risk"] = float(
                 predicted_risk
-                < best_predicted_risk
-            ):
+            )
 
-                best_predicted_risk = (
-                    predicted_risk
-                )
-
-                best_stiffness = float(
-                    candidate_stiffness
-                )
+        # Pick candidate with lowest predicted risk.
+        best_result = min(
+            candidate_results,
+            key=lambda result:
+                result["predicted_risk"],
+        )
 
         return (
-            best_stiffness,
-            best_predicted_risk,
+            best_result["stiffness"],
+            best_result["predicted_risk"],
             candidate_results,
         )
 

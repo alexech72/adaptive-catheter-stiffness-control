@@ -51,7 +51,7 @@ def run_rate_limited_ai_navigation(
     friction=0.20,
     commanded_velocity=4.0,
     base_force=0.10,
-    maximum_stiffness_change=0.05,
+    maximum_stiffness_change=0.10,
 ):
     """
     Run rate-limited AI-assisted navigation through
